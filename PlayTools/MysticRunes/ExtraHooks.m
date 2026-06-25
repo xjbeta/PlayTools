@@ -8,6 +8,7 @@
 #import <PlayTools/PlayTools-Swift.h>
 #import "ExtraHooks.h"
 #import <WebKit/WebKit.h>
+#import <QuartzCore/QuartzCore.h>
 #import <GameController/GameController.h>
 #import "FilteredDirectoryEnumerator.h"
 #import "UIEvent+Private.h"
@@ -395,6 +396,15 @@ static void NSApplicationHide(void) {
     return nil;
 }
 
+- (void) hook_CADisplayLink_setPreferredFrameRateRange:(CAFrameRateRange)range {
+    NSInteger rate = [[PlaySettings shared] forcedRefreshRate];
+    if (rate > 0) {
+        float r = (float)rate;
+        range = CAFrameRateRangeMake(r, r, r);
+    }
+    [self hook_CADisplayLink_setPreferredFrameRateRange:range];
+}
+
 - (id) hook_GCKeyboard_coalescedKeyboard {
     return nil;
 }
@@ -760,6 +770,9 @@ static void CloudWuwa_SendMouseEvent(int keyCode, int action, int accumulateMous
             [objc_getClass("UnityView") swizzleInstanceMethod:@selector(pressesBegan:withEvent:) withMethod:@selector(hook_UIView_pressesBegan:withEvent:)];
             [objc_getClass("UnityView") swizzleInstanceMethod:NSSelectorFromString(@"keyCommands")  withMethod:@selector(hook_UnityView_keyCommands_DISABLED)];
         }
+        if ([[PlaySettings shared] forcedRefreshRate] > 0) {
+            [objc_getClass("CADisplayLink") swizzleInstanceMethod:@selector(setPreferredFrameRateRange:) withMethod:@selector(hook_CADisplayLink_setPreferredFrameRateRange:)];
+		}
 
         if ([[PlaySettings shared] weLinkCloudGameForceTouchMode]) {
             Class cls = objc_getClass("WLCGGameView");

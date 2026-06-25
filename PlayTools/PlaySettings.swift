@@ -73,6 +73,8 @@ let settings = PlaySettings.shared
 
     @objc lazy var skipGameCenterLogin = extraSettingsData.skipGameCenterLogin
 
+    @objc lazy var forcedRefreshRate = extraSettingsData.forcedRefreshRate
+
     @objc lazy var unityEngineDisableOrientationCheck = extraSettingsData.unityEngineDisableOrientationCheck
 
     @objc lazy var unityEngineDisableAROverlayTouches = extraSettingsData.unityEngineDisableAROverlayTouches
@@ -343,4 +345,5 @@ struct ExtraAppSettingsData: Codable {
     var skipAppleSignInStateCheck = false
     var fixPlayChainCreateKey = false
     var lordOfMysteriesLandscapeWebview = false
+    var forcedRefreshRate: Int = 0
 }
