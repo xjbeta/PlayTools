@@ -306,7 +306,14 @@ class NSWindowProxy {
     }
 
     var isFullScreen: Bool {
-        uiWindow?.windowScene?.isFullScreen ?? false
+        if #available(macCatalyst 16.0, *) {
+            return uiWindow?.windowScene?.isFullScreen ?? false
+        } else {
+            if let styleMask = nsWindow.value(forKey: "styleMask") as? Int {
+                return (styleMask & 0x4000) != 0
+            }
+            return false
+        }
     }
 }
 
