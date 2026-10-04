@@ -34,3 +34,6 @@ void EndfieldGamepadMapStart(void);
 
 /// Endfield: called from the keyboard path on a real key press.
 void EndfieldGamepadMapKeyboardActivity(void);
+
+/// Endfield: installs the GCMouse delta scaling (see PlayTools/Endfield/EndfieldMouseDelta.h).
+void EndfieldMouseDeltaStart(void);

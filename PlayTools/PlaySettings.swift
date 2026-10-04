@@ -159,6 +159,11 @@ let settings = PlaySettings.shared
     /// map (default off).
     @objc lazy var endfieldGamepadMapKey = extraSettingsData.endfieldGamepadMapKey
 
+    /// Endfield: extra multiplier on the mouse look delta (1.0 = the corrected value).
+    @objc lazy var endfieldMouseDeltaScale = extraSettingsData.endfieldMouseDeltaScale
+
+    /// Endfield: master switch for everything that needs the libUnityDesktopMode plugin.
+    @objc lazy var endfieldPluginFixes = extraSettingsData.endfieldPluginFixes
 
     private lazy var pendingLandscapeUIViewControllerNames = extraSettingsData.forceUIViewLandscapeArgs
 
@@ -353,5 +358,9 @@ struct ExtraAppSettingsData: Codable {
     /// Endfield: keep DeviceInfo.platform at 8 in gamepad mode so the view key (⧉) opens the
     /// map (default off).
     var endfieldGamepadMapKey = false
+    /// Endfield: extra multiplier on the mouse look delta (1.0 = the corrected value).
+    var endfieldMouseDeltaScale: Double = 1.0
+    /// Endfield: master switch for everything that needs the libUnityDesktopMode plugin.
+    var endfieldPluginFixes = false
     var forcedRefreshRate: Int = 0
 }

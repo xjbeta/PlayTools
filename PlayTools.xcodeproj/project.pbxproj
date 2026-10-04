@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		01FDCDA83072BE1E00F76B2D /* EndfieldGamepadMap.h in Headers */ = {isa = PBXBuildFile; fileRef = 01FDCDA73072BE1E00F76B2D /* EndfieldGamepadMap.h */; };
 		01FDCDAA3072BE1F00F76B2D /* EndfieldGamepadMap.m in Sources */ = {isa = PBXBuildFile; fileRef = 01FDCDA93072BE1F00F76B2D /* EndfieldGamepadMap.m */; };
+		01FDCDAE3072D33B00F76B2D /* EndfieldMouseDelta.h in Headers */ = {isa = PBXBuildFile; fileRef = 01FDCDAD3072D33B00F76B2D /* EndfieldMouseDelta.h */; };
+		01FDCDB03072D33C00F76B2D /* EndfieldMouseDelta.m in Sources */ = {isa = PBXBuildFile; fileRef = 01FDCDAF3072D33C00F76B2D /* EndfieldMouseDelta.m */; };
 		2847AE48298EFC0F00B0F983 /* PlayScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2847AE47298EFC0F00B0F983 /* PlayScreen.swift */; };
 		6E76639B28D0FAE700DE4AF9 /* Plugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E76639A28D0FAE700DE4AF9 /* Plugin.swift */; };
 		6E76639C28D0FAE700DE4AF9 /* Plugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E76639A28D0FAE700DE4AF9 /* Plugin.swift */; };
@@ -119,6 +121,8 @@
 /* Begin PBXFileReference section */
 		01FDCDA73072BE1E00F76B2D /* EndfieldGamepadMap.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = EndfieldGamepadMap.h; sourceTree = "<group>"; };
 		01FDCDA93072BE1F00F76B2D /* EndfieldGamepadMap.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = EndfieldGamepadMap.m; sourceTree = "<group>"; };
+		01FDCDAD3072D33B00F76B2D /* EndfieldMouseDelta.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = EndfieldMouseDelta.h; sourceTree = "<group>"; };
+		01FDCDAF3072D33C00F76B2D /* EndfieldMouseDelta.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = EndfieldMouseDelta.m; sourceTree = "<group>"; };
 		2847AE47298EFC0F00B0F983 /* PlayScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayScreen.swift; sourceTree = "<group>"; };
 		65F0487A0C752EE4930AF0AB /* UserPluginLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserPluginLoader.swift; sourceTree = "<group>"; };
 		6E76639628D0FA6200DE4AF9 /* AKInterface-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "AKInterface-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -243,6 +247,8 @@
 			children = (
 				01FDCDA73072BE1E00F76B2D /* EndfieldGamepadMap.h */,
 				01FDCDA93072BE1F00F76B2D /* EndfieldGamepadMap.m */,
+				01FDCDAD3072D33B00F76B2D /* EndfieldMouseDelta.h */,
+				01FDCDAF3072D33C00F76B2D /* EndfieldMouseDelta.m */,
 			);
 			path = Endfield;
 			sourceTree = "<group>";
@@ -612,6 +618,7 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				01FDCDAE3072D33B00F76B2D /* EndfieldMouseDelta.h in Headers */,
 				AA71986E287A81A000623C15 /* NSObject+Swizzle.h in Headers */,
 				AB7DA47729B8A78B0034ACB2 /* PlayShadow.h in Headers */,
 				AA719846287A81A000623C15 /* IOHIDEvent+KIF.h in Headers */,
@@ -790,6 +797,7 @@
 				AA71970D287A44D200623C15 /* PlaySettings.swift in Sources */,
 				95D474FB2C0BA77B0072797F /* JoystickElement.swift in Sources */,
 				AA719759287A480D00623C15 /* PlayAction.swift in Sources */,
+				01FDCDB03072D33C00F76B2D /* EndfieldMouseDelta.m in Sources */,
 				D04B12CA2EF6F3DD008FEC14 /* MediaVolume.m in Sources */,
 				92611FDC2F5FDE0F00B7B1E8 /* GamepadToKeyEditorControllerEventAdapter.swift in Sources */,
 				954389C82B392D5300B063BB /* Button.swift in Sources */,
