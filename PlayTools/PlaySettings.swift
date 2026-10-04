@@ -155,6 +155,11 @@ let settings = PlaySettings.shared
 
     @objc lazy var lordOfMysteriesLandscapeWebview = extraSettingsData.lordOfMysteriesLandscapeWebview
 
+    /// Endfield: keep DeviceInfo.platform at 8 in gamepad mode so the view key (⧉) opens the
+    /// map (default off).
+    @objc lazy var endfieldGamepadMapKey = extraSettingsData.endfieldGamepadMapKey
+
+
     private lazy var pendingLandscapeUIViewControllerNames = extraSettingsData.forceUIViewLandscapeArgs
 
     @objc func landscapeUIViewControllerNames() -> [String] {
@@ -345,5 +350,8 @@ struct ExtraAppSettingsData: Codable {
     var skipAppleSignInStateCheck = false
     var fixPlayChainCreateKey = false
     var lordOfMysteriesLandscapeWebview = false
+    /// Endfield: keep DeviceInfo.platform at 8 in gamepad mode so the view key (⧉) opens the
+    /// map (default off).
+    var endfieldGamepadMapKey = false
     var forcedRefreshRate: Int = 0
 }

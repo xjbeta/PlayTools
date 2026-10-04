@@ -7,12 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		01FDCDA83072BE1E00F76B2D /* EndfieldGamepadMap.h in Headers */ = {isa = PBXBuildFile; fileRef = 01FDCDA73072BE1E00F76B2D /* EndfieldGamepadMap.h */; };
+		01FDCDAA3072BE1F00F76B2D /* EndfieldGamepadMap.m in Sources */ = {isa = PBXBuildFile; fileRef = 01FDCDA93072BE1F00F76B2D /* EndfieldGamepadMap.m */; };
 		2847AE48298EFC0F00B0F983 /* PlayScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2847AE47298EFC0F00B0F983 /* PlayScreen.swift */; };
 		6E76639B28D0FAE700DE4AF9 /* Plugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E76639A28D0FAE700DE4AF9 /* Plugin.swift */; };
 		6E76639C28D0FAE700DE4AF9 /* Plugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E76639A28D0FAE700DE4AF9 /* Plugin.swift */; };
 		6E7663A128D0FB5300DE4AF9 /* AKPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E7663A028D0FB5300DE4AF9 /* AKPlugin.swift */; };
 		6E7663A528D0FEBE00DE4AF9 /* AKPluginLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E7663A428D0FEBE00DE4AF9 /* AKPluginLoader.swift */; };
-		955A3F48AFD07B6583BFEFC3 /* UserPluginLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65F0487A0C752EE4930AF0AB /* UserPluginLoader.swift */; };
 		6E84A14528D0F94E00BF7495 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA818CBA287ABFD5000BEE9D /* UIKit.framework */; };
 		6E84A15028D0F97500BF7495 /* AKInterface.bundle in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 6E84A14C28D0F96D00BF7495 /* AKInterface.bundle */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		920DDAA72F4B353500D0E9A8 /* ExtraHooks.m in Sources */ = {isa = PBXBuildFile; fileRef = 920DDAA62F4B353500D0E9A8 /* ExtraHooks.m */; };
@@ -37,6 +38,7 @@
 		9555ED2F2C058E08006E469C /* DebugView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9555ED2E2C058E08006E469C /* DebugView.swift */; };
 		9555ED312C058E28006E469C /* DebugModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9555ED302C058E28006E469C /* DebugModel.swift */; };
 		9555ED332C058E36006E469C /* DebugController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9555ED322C058E36006E469C /* DebugController.swift */; };
+		955A3F48AFD07B6583BFEFC3 /* UserPluginLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65F0487A0C752EE4930AF0AB /* UserPluginLoader.swift */; };
 		9562D1512AB484C7002C329D /* EventAdapters.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9562D1502AB484C7002C329D /* EventAdapters.swift */; };
 		9562D1532AB484FD002C329D /* EventAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9562D1522AB484FD002C329D /* EventAdapter.swift */; };
 		9562D1582AB4FB9B002C329D /* TouchscreenKeyboardEventAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9562D1572AB4FB9B002C329D /* TouchscreenKeyboardEventAdapter.swift */; };
@@ -115,12 +117,14 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		01FDCDA73072BE1E00F76B2D /* EndfieldGamepadMap.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = EndfieldGamepadMap.h; sourceTree = "<group>"; };
+		01FDCDA93072BE1F00F76B2D /* EndfieldGamepadMap.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = EndfieldGamepadMap.m; sourceTree = "<group>"; };
 		2847AE47298EFC0F00B0F983 /* PlayScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayScreen.swift; sourceTree = "<group>"; };
+		65F0487A0C752EE4930AF0AB /* UserPluginLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserPluginLoader.swift; sourceTree = "<group>"; };
 		6E76639628D0FA6200DE4AF9 /* AKInterface-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "AKInterface-Bridging-Header.h"; sourceTree = "<group>"; };
 		6E76639A28D0FAE700DE4AF9 /* Plugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Plugin.swift; sourceTree = "<group>"; };
 		6E7663A028D0FB5300DE4AF9 /* AKPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AKPlugin.swift; sourceTree = "<group>"; };
 		6E7663A428D0FEBE00DE4AF9 /* AKPluginLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AKPluginLoader.swift; sourceTree = "<group>"; };
-		65F0487A0C752EE4930AF0AB /* UserPluginLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserPluginLoader.swift; sourceTree = "<group>"; };
 		6E84A14C28D0F96D00BF7495 /* AKInterface.bundle */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AKInterface.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
 		920DDAA62F4B353500D0E9A8 /* ExtraHooks.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ExtraHooks.m; sourceTree = "<group>"; };
 		920DDAA92F4B36D100D0E9A8 /* ExtraHooks.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ExtraHooks.h; sourceTree = "<group>"; };
@@ -234,6 +238,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		01FDCDA63072BE1E00F76B2D /* Endfield */ = {
+			isa = PBXGroup;
+			children = (
+				01FDCDA73072BE1E00F76B2D /* EndfieldGamepadMap.h */,
+				01FDCDA93072BE1F00F76B2D /* EndfieldGamepadMap.m */,
+			);
+			path = Endfield;
+			sourceTree = "<group>";
+		};
 		6E76639928D0FA6F00DE4AF9 /* AKInterface */ = {
 			isa = PBXGroup;
 			children = (
@@ -478,6 +491,7 @@
 				AA719702287A44D200623C15 /* PlayLoader.m */,
 				AA719708287A44D200623C15 /* PlayTools.h */,
 				2847AE47298EFC0F00B0F983 /* PlayScreen.swift */,
+				01FDCDA63072BE1E00F76B2D /* Endfield */,
 			);
 			path = PlayTools;
 			sourceTree = "<group>";
@@ -601,6 +615,7 @@
 				AA71986E287A81A000623C15 /* NSObject+Swizzle.h in Headers */,
 				AB7DA47729B8A78B0034ACB2 /* PlayShadow.h in Headers */,
 				AA719846287A81A000623C15 /* IOHIDEvent+KIF.h in Headers */,
+				01FDCDA83072BE1E00F76B2D /* EndfieldGamepadMap.h in Headers */,
 				AA719862287A81A000623C15 /* UITouch-KIFAdditions.h in Headers */,
 				AA71986B287A81A000623C15 /* UIApplication+Private.h in Headers */,
 				AA71986D287A81A000623C15 /* PTFakeMetaTouch.h in Headers */,
@@ -791,6 +806,7 @@
 				9562D1732AB52416002C329D /* EditorKeyboardEventAdapter.swift in Sources */,
 				925CF1BE2FFCE25D00F429D8 /* FilteredDirectoryEnumerator.m in Sources */,
 				92611FD72F5FDDB900B7B1E8 /* GamepadToKeyEditorKeyboardEventAdapter.swift in Sources */,
+				01FDCDAA3072BE1F00F76B2D /* EndfieldGamepadMap.m in Sources */,
 				9562D1752AB52479002C329D /* EditorMouseEventAdapter.swift in Sources */,
 				AA7197AA287A481500623C15 /* Toast.swift in Sources */,
 				AA719789287A480D00623C15 /* PlayInput.swift in Sources */,

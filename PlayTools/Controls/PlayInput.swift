@@ -96,6 +96,12 @@ import GameController
         if PlaySettings.shared.minecraftFixKeyboardMouse {
             applyMinecraftKeyboardMouseFix()
         }
+
+        // Endfield only - the module checks the bundle identifier itself, and the fix is opt-in
+        // via the setting. Holds DeviceInfo.platform at 8 while inputType == 2 so the map key works.
+        if PlaySettings.shared.endfieldGamepadMapKey {
+            EndfieldGamepadMapStart()
+        }
     }
 
     private func simulateGCKeyboardDisconnect() {
