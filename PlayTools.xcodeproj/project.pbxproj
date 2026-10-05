@@ -11,6 +11,12 @@
 		01FDCDAA3072BE1F00F76B2D /* EndfieldGamepadMap.m in Sources */ = {isa = PBXBuildFile; fileRef = 01FDCDA93072BE1F00F76B2D /* EndfieldGamepadMap.m */; };
 		01FDCDAE3072D33B00F76B2D /* EndfieldMouseDelta.h in Headers */ = {isa = PBXBuildFile; fileRef = 01FDCDAD3072D33B00F76B2D /* EndfieldMouseDelta.h */; };
 		01FDCDB03072D33C00F76B2D /* EndfieldMouseDelta.m in Sources */ = {isa = PBXBuildFile; fileRef = 01FDCDAF3072D33C00F76B2D /* EndfieldMouseDelta.m */; };
+		01FDCDB23073B6C300F76B2D /* EndfieldRuntime.h in Headers */ = {isa = PBXBuildFile; fileRef = 01FDCDB13073B6C300F76B2D /* EndfieldRuntime.h */; };
+		01FDCDB43073B6CF00F76B2D /* EndfieldRuntime.m in Sources */ = {isa = PBXBuildFile; fileRef = 01FDCDB33073B6CF00F76B2D /* EndfieldRuntime.m */; };
+		01FDCDB63073B6D700F76B2D /* EndfieldFpsFix.h in Headers */ = {isa = PBXBuildFile; fileRef = 01FDCDB53073B6D700F76B2D /* EndfieldFpsFix.h */; };
+		01FDCDB83073B6D700F76B2D /* EndfieldFpsFix.m in Sources */ = {isa = PBXBuildFile; fileRef = 01FDCDB73073B6D700F76B2D /* EndfieldFpsFix.m */; };
+		01FDCDBA3073B6E100F76B2D /* EndfieldResolutionFix.h in Headers */ = {isa = PBXBuildFile; fileRef = 01FDCDB93073B6E100F76B2D /* EndfieldResolutionFix.h */; };
+		01FDCDBC3073B6E100F76B2D /* EndfieldResolutionFix.m in Sources */ = {isa = PBXBuildFile; fileRef = 01FDCDBB3073B6E100F76B2D /* EndfieldResolutionFix.m */; };
 		2847AE48298EFC0F00B0F983 /* PlayScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2847AE47298EFC0F00B0F983 /* PlayScreen.swift */; };
 		6E76639B28D0FAE700DE4AF9 /* Plugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E76639A28D0FAE700DE4AF9 /* Plugin.swift */; };
 		6E76639C28D0FAE700DE4AF9 /* Plugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E76639A28D0FAE700DE4AF9 /* Plugin.swift */; };
@@ -123,6 +129,12 @@
 		01FDCDA93072BE1F00F76B2D /* EndfieldGamepadMap.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = EndfieldGamepadMap.m; sourceTree = "<group>"; };
 		01FDCDAD3072D33B00F76B2D /* EndfieldMouseDelta.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = EndfieldMouseDelta.h; sourceTree = "<group>"; };
 		01FDCDAF3072D33C00F76B2D /* EndfieldMouseDelta.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = EndfieldMouseDelta.m; sourceTree = "<group>"; };
+		01FDCDB13073B6C300F76B2D /* EndfieldRuntime.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = EndfieldRuntime.h; sourceTree = "<group>"; };
+		01FDCDB33073B6CF00F76B2D /* EndfieldRuntime.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = EndfieldRuntime.m; sourceTree = "<group>"; };
+		01FDCDB53073B6D700F76B2D /* EndfieldFpsFix.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = EndfieldFpsFix.h; sourceTree = "<group>"; };
+		01FDCDB73073B6D700F76B2D /* EndfieldFpsFix.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = EndfieldFpsFix.m; sourceTree = "<group>"; };
+		01FDCDB93073B6E100F76B2D /* EndfieldResolutionFix.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = EndfieldResolutionFix.h; sourceTree = "<group>"; };
+		01FDCDBB3073B6E100F76B2D /* EndfieldResolutionFix.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = EndfieldResolutionFix.m; sourceTree = "<group>"; };
 		2847AE47298EFC0F00B0F983 /* PlayScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayScreen.swift; sourceTree = "<group>"; };
 		65F0487A0C752EE4930AF0AB /* UserPluginLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserPluginLoader.swift; sourceTree = "<group>"; };
 		6E76639628D0FA6200DE4AF9 /* AKInterface-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "AKInterface-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -249,6 +261,12 @@
 				01FDCDA93072BE1F00F76B2D /* EndfieldGamepadMap.m */,
 				01FDCDAD3072D33B00F76B2D /* EndfieldMouseDelta.h */,
 				01FDCDAF3072D33C00F76B2D /* EndfieldMouseDelta.m */,
+				01FDCDB13073B6C300F76B2D /* EndfieldRuntime.h */,
+				01FDCDB33073B6CF00F76B2D /* EndfieldRuntime.m */,
+				01FDCDB53073B6D700F76B2D /* EndfieldFpsFix.h */,
+				01FDCDB73073B6D700F76B2D /* EndfieldFpsFix.m */,
+				01FDCDB93073B6E100F76B2D /* EndfieldResolutionFix.h */,
+				01FDCDBB3073B6E100F76B2D /* EndfieldResolutionFix.m */,
 			);
 			path = Endfield;
 			sourceTree = "<group>";
@@ -618,7 +636,9 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				01FDCDBA3073B6E100F76B2D /* EndfieldResolutionFix.h in Headers */,
 				01FDCDAE3072D33B00F76B2D /* EndfieldMouseDelta.h in Headers */,
+				01FDCDB63073B6D700F76B2D /* EndfieldFpsFix.h in Headers */,
 				AA71986E287A81A000623C15 /* NSObject+Swizzle.h in Headers */,
 				AB7DA47729B8A78B0034ACB2 /* PlayShadow.h in Headers */,
 				AA719846287A81A000623C15 /* IOHIDEvent+KIF.h in Headers */,
@@ -626,6 +646,7 @@
 				AA719862287A81A000623C15 /* UITouch-KIFAdditions.h in Headers */,
 				AA71986B287A81A000623C15 /* UIApplication+Private.h in Headers */,
 				AA71986D287A81A000623C15 /* PTFakeMetaTouch.h in Headers */,
+				01FDCDB23073B6C300F76B2D /* EndfieldRuntime.h in Headers */,
 				920DDAAA2F4B36D100D0E9A8 /* ExtraHooks.h in Headers */,
 				AA719870287A81A000623C15 /* UIEvent+Private.h in Headers */,
 				AA71970E287A44D200623C15 /* PlayLoader.h in Headers */,
@@ -788,6 +809,7 @@
 				AA7197AE287A481500623C15 /* EditorCircleMenu.swift in Sources */,
 				954389D22B3A5AE100B063BB /* ElementController.swift in Sources */,
 				95D474FF2C0BDAB20072797F /* DraggableButtonElement.swift in Sources */,
+				01FDCDB83073B6D700F76B2D /* EndfieldFpsFix.m in Sources */,
 				9562D1622AB4FE73002C329D /* CameraControlMouseEventAdapter.swift in Sources */,
 				954389C42B38968C00B063BB /* Joystick.swift in Sources */,
 				9562D1642AB4FEB4002C329D /* TouchscreenMouseEventAdapter.swift in Sources */,
@@ -807,6 +829,7 @@
 				2847AE48298EFC0F00B0F983 /* PlayScreen.swift in Sources */,
 				9562D1532AB484FD002C329D /* EventAdapter.swift in Sources */,
 				AA7197A2287A481500623C15 /* CircleMenu.swift in Sources */,
+				01FDCDBC3073B6E100F76B2D /* EndfieldResolutionFix.m in Sources */,
 				954389CE2B39F26600B063BB /* ElementView.swift in Sources */,
 				B66E65002C936EA100E48FD0 /* PlayedAppleDBConstants.swift in Sources */,
 				9562D15A2AB4FBBB002C329D /* TransparentKeyboardEventAdapter.swift in Sources */,
@@ -827,6 +850,7 @@
 				9555ED2F2C058E08006E469C /* DebugView.swift in Sources */,
 				AA71978A287A480D00623C15 /* ControlMode.swift in Sources */,
 				AA7197AD287A481500623C15 /* EditorController.swift in Sources */,
+				01FDCDB43073B6CF00F76B2D /* EndfieldRuntime.m in Sources */,
 				9562D16B2AB505AD002C329D /* MouseEventAdapter.swift in Sources */,
 				9562D15C2AB4FC79002C329D /* TransparentMouseEventAdapter.swift in Sources */,
 				9562D1772AB52550002C329D /* EditorControllerEventAdapter.swift in Sources */,
@@ -1062,7 +1086,6 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEFINES_MODULE = YES;
-				DEVELOPMENT_TEAM = 792V9HMJW3;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
@@ -1107,7 +1130,6 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEFINES_MODULE = YES;
-				DEVELOPMENT_TEAM = 792V9HMJW3;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
