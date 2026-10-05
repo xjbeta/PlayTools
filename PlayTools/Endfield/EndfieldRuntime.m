@@ -47,6 +47,33 @@ bool EndfieldRuntimeIsGame(void) {
     return ef_rt_is_endfield_bundle([NSBundle mainBundle].bundleIdentifier ?: @"");
 }
 
+// ---------------------------------------------------------------------------
+// Install-status registry, so a failed patch is visible instead of only a log line buried among
+// the rest.
+// ---------------------------------------------------------------------------
+
+#define EF_RT_MAX_NOTES 8
+static struct { const char *name; int ok; } ef_rt_notes[EF_RT_MAX_NOTES];
+static int ef_rt_note_count = 0;
+
+void EndfieldRuntimeNote(const char *component, bool ok) {
+    if (component == NULL || ef_rt_note_count >= EF_RT_MAX_NOTES) { return; }
+    ef_rt_notes[ef_rt_note_count].name = component;
+    ef_rt_notes[ef_rt_note_count].ok = ok ? 1 : 0;
+    ef_rt_note_count += 1;
+}
+
+void EndfieldRuntimeLogStatus(void) {
+    NSMutableString *line = [NSMutableString stringWithString:@"[ZEF] status:"];
+    if (ef_rt_note_count == 0) {
+        [line appendString:@" (nothing recorded)"];
+    }
+    for (int i = 0; i < ef_rt_note_count; i++) {
+        [line appendFormat:@" %s=%@", ef_rt_notes[i].name, ef_rt_notes[i].ok ? @"OK" : @"FAILED"];
+    }
+    EndfieldRuntimeLog(@"%@", line);
+}
+
 void EndfieldRuntimeLog(NSString *format, ...) {
     va_list args;
     va_start(args, format);
@@ -145,24 +172,67 @@ static double ef_rt_uptime_seconds(void) {
     return (double)(now - ef_rt_load_ns) / 1000000000.0;
 }
 
-// The engine finishes il2cpp init a few seconds in; stay clear of that window.
-static const double ef_rt_min_uptime = 8.0;
+// The engine finishes il2cpp init a few seconds in; stay clear of that window as a first pass.
+static const double ef_rt_min_uptime = 6.0;
+
+// ---------------------------------------------------------------------------
+// Crash-guarded probe. Before il2cpp has built its assembly list, querying it dereferences
+// not-yet-initialised state and segfaults. A SIGSEGV/SIGBUS handler with sigsetjmp turns that
+// into "not ready yet" for the caller, instead of taking the game down. The probe flag and the
+// jump buffer are thread-local so only the probing thread is affected.
+// ---------------------------------------------------------------------------
+
+static __thread sigjmp_buf ef_rt_probe_jmp;
+static __thread volatile sig_atomic_t ef_rt_probing = 0;
+
+static void ef_rt_probe_handler(int sig, siginfo_t *info, void *context) {
+    if (ef_rt_probing) {
+        ef_rt_probing = 0;
+        siglongjmp(ef_rt_probe_jmp, 1);
+    }
+    // Not our probe: this is a real crash. Restore the default action and re-raise.
+    signal(sig, SIG_DFL);
+    raise(sig);
+}
 
 void *EndfieldRuntimeClass(const char *nameSpace, const char *name) {
     if (!ef_rt_load_api()) { return NULL; }
     if (ef_rt_uptime_seconds() < ef_rt_min_uptime) { return NULL; }
-    const void *domain = ef_api.domain_get();
-    if (domain == NULL) { return NULL; }
-    size_t count = 0;
-    const void **assemblies = ef_api.domain_get_assemblies(domain, &count);
-    if (assemblies == NULL) { return NULL; }
-    for (size_t i = 0; i < count; i++) {
-        const void *image = ef_api.assembly_get_image(assemblies[i]);
-        if (image == NULL) { continue; }
-        void *klass = ef_api.class_from_name(image, nameSpace, name);
-        if (klass != NULL) { return klass; }
+
+    struct sigaction action;
+    struct sigaction prevSegv;
+    struct sigaction prevBus;
+    memset(&action, 0, sizeof(action));
+    action.sa_flags = SA_SIGINFO;
+    action.sa_sigaction = ef_rt_probe_handler;
+    sigemptyset(&action.sa_mask);
+    sigaction(SIGSEGV, &action, &prevSegv);
+    sigaction(SIGBUS, &action, &prevBus);
+
+    void *result = NULL;
+    if (sigsetjmp(ef_rt_probe_jmp, 1) == 0) {
+        ef_rt_probing = 1;
+        const void *domain = ef_api.domain_get();
+        if (domain != NULL) {
+            size_t count = 0;
+            const void **assemblies = ef_api.domain_get_assemblies(domain, &count);
+            if (assemblies != NULL) {
+                for (size_t i = 0; i < count; i++) {
+                    const void *image = ef_api.assembly_get_image(assemblies[i]);
+                    if (image == NULL) { continue; }
+                    void *klass = ef_api.class_from_name(image, nameSpace, name);
+                    if (klass != NULL) { result = klass; break; }
+                }
+            }
+        }
+        ef_rt_probing = 0;
+    } else {
+        EndfieldRuntimeLog(@"[ZEF] runtime: il2cpp not ready yet (probe recovered)");
     }
-    return NULL;
+
+    sigaction(SIGSEGV, &prevSegv, NULL);
+    sigaction(SIGBUS, &prevBus, NULL);
+    return result;
 }
 
 void *EndfieldRuntimeMethod(void *klass, const char *name, int argc) {
@@ -337,6 +407,56 @@ void *EndfieldRuntimeScanText(const uint32_t *masks, const uint32_t *values, siz
                             if ((words[k + j] & masks[j]) != values[j]) { matched = false; break; }
                         }
                         if (matched) { return (void *)&words[k]; }
+                    }
+                }
+            }
+        }
+        cursor += command->cmdsize;
+    }
+    return NULL;
+}
+
+void *EndfieldRuntimeScanTextPair(uint32_t head, uint32_t nextMask, uint32_t nextValue,
+                                  uint32_t tail, size_t gapBytes) {
+    return EndfieldRuntimeScanTextPairMasked(head, 0xFFFFFFFFu, nextMask, nextValue,
+                                             tail, 0xFFFFFFFFu, gapBytes);
+}
+
+void *EndfieldRuntimeScanTextPairMasked(uint32_t head, uint32_t headMask,
+                                        uint32_t nextMask, uint32_t nextValue,
+                                        uint32_t tail, uint32_t tailMask, size_t gapBytes) {
+    if (gapBytes == 0 || (gapBytes % 4) != 0) { return NULL; }
+    void *base = EndfieldRuntimeImageBase();
+    if (base == NULL) { return NULL; }
+    const struct mach_header_64 *header = (const struct mach_header_64 *)base;
+    if (header->magic != MH_MAGIC_64) { return NULL; }
+    const unsigned char *cursor = (const unsigned char *)base + sizeof(struct mach_header_64);
+    const unsigned char *limit = cursor + header->sizeofcmds;
+    size_t gapWords = gapBytes / 4;
+
+    for (uint32_t i = 0; i < header->ncmds; i++) {
+        if (cursor + sizeof(struct load_command) > limit) { break; }
+        const struct load_command *command = (const struct load_command *)cursor;
+        if (command->cmdsize < sizeof(struct load_command) || cursor + command->cmdsize > limit) {
+            break;
+        }
+        if (command->cmd == LC_SEGMENT_64) {
+            const struct segment_command_64 *segment = (const struct segment_command_64 *)command;
+            if (strncmp(segment->segname, "__TEXT", sizeof(segment->segname)) == 0) {
+                const struct section_64 *sections =
+                    (const struct section_64 *)(cursor + sizeof(struct segment_command_64));
+                for (uint32_t s = 0; s < segment->nsects; s++) {
+                    if (strncmp(sections[s].sectname, "__text", sizeof(sections[s].sectname)) != 0) {
+                        continue;
+                    }
+                    uint32_t *words = (uint32_t *)((uintptr_t)base + sections[s].addr);
+                    size_t countWords = sections[s].size / 4;
+                    if (countWords <= gapWords + 1) { continue; }
+                    for (size_t k = 0; k + gapWords + 1 <= countWords; k++) {
+                        if ((words[k] & headMask) != head) { continue; }
+                        if ((words[k + 1] & nextMask) != nextValue) { continue; }
+                        if ((words[k + gapWords] & tailMask) != tail) { continue; }
+                        return (void *)&words[k];
                     }
                 }
             }

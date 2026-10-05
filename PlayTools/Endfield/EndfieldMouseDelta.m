@@ -50,5 +50,6 @@ void EndfieldMouseDeltaStart(void) {
         return;
     }
     ef_original_set_mouse_moved = method_setImplementation(method, (IMP)ef_set_mouse_moved_handler);
+    EndfieldRuntimeNote("mouse delta", true);
     EndfieldRuntimeLog(@"[ZEF] mouse delta: scaling installed (x customScaler x endfieldMouseDeltaScale)");
 }

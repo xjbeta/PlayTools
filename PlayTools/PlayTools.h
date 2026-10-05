@@ -43,3 +43,6 @@ void EndfieldResolutionFixStart(void);
 
 /// Endfield: doubles the target frame rate at runtime (see Endfield/EndfieldFpsFix.h).
 void EndfieldFpsFixStart(void);
+
+/// Endfield: log a one-line summary of which runtime fixes installed.
+void EndfieldRuntimeLogStatus(void);

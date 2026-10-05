@@ -21,7 +21,6 @@
 
 static const int ef_fps_max_attempts = 30;
 static const int64_t ef_fps_retry_ns = 2 * NSEC_PER_SEC;
-static const size_t ef_fps_patch_offset = 0x0c;          // inside the trampoline
 static const uint32_t ef_fps_original = 0xAA0003F3u;     // mov x19, x0
 static const uint32_t ef_fps_doubled = 0x8B000013u;      // add x19, x0, x0
 
@@ -35,23 +34,33 @@ static bool ef_fps_patch_trampoline(void) {
     void *trampoline = EndfieldRuntimeMethodPointer(method);
     if (trampoline == NULL) { return false; }
 
-    uint32_t *site = (uint32_t *)((uintptr_t)trampoline + ef_fps_patch_offset);
-    uint32_t current = 0;
-    if (!EndfieldRuntimeReadMemory(site, &current, sizeof(current))) { return false; }
-    if (current == ef_fps_doubled) {
-        ef_fps_patched = true;
-        return true;
+    // Find `mov x19, x0` (the fps argument being saved) in the trampoline's first few
+    // instructions, rather than assuming a fixed offset, so a prologue change does not break it.
+    uint32_t *site = NULL;
+    for (size_t i = 0; i < 8; i++) {
+        uint32_t word = 0;
+        if (!EndfieldRuntimeReadMemory((char *)trampoline + i * 4, &word, sizeof(word))) { break; }
+        if (word == ef_fps_doubled) {
+            ef_fps_patched = true;
+            return true;
+        }
+        if (word == ef_fps_original) {
+            site = (uint32_t *)((char *)trampoline + i * 4);
+            break;
+        }
     }
-    if (current != ef_fps_original) {
-        EndfieldRuntimeLog(@"[ZEF] fps x2: unexpected bytes at trampoline (%08x), not patched",
-                           current);
+    if (site == NULL) {
+        EndfieldRuntimeLog(@"[ZEF] fps x2: `mov x19,x0` not found in the trampoline, not patched");
+        EndfieldRuntimeNote("fps x2", false);
         return false;
     }
     if (!EndfieldRuntimeWriteMemory(site, &ef_fps_doubled, sizeof(ef_fps_doubled))) {
         EndfieldRuntimeLog(@"[ZEF] fps x2: write failed");
+        EndfieldRuntimeNote("fps x2", false);
         return false;
     }
     ef_fps_patched = true;
+    EndfieldRuntimeNote("fps x2", true);
     EndfieldRuntimeLog(@"[ZEF] fps x2: patched trampoline @ %p", (void *)site);
     return true;
 }

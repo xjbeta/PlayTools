@@ -117,6 +117,10 @@ import GameController
         if PlaySettings.shared.endfieldFpsFix {
             EndfieldFpsFixStart()
         }
+        // One summary line once the fixes have had time to install (or fail).
+        DispatchQueue.main.asyncAfter(deadline: .now() + 15, qos: .utility) {
+            EndfieldRuntimeLogStatus()
+        }
     }
 
     private func simulateGCKeyboardDisconnect() {

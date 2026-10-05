@@ -26,6 +26,12 @@ extern "C" {
 /// True when the running app is an Endfield build (CN or international).
 bool EndfieldRuntimeIsGame(void);
 
+/// Record a component's install result, for the end-of-startup summary.
+void EndfieldRuntimeNote(const char *component, bool ok);
+
+/// Log a one-line summary of every recorded component (installed / failed).
+void EndfieldRuntimeLogStatus(void);
+
 /// Append a timestamped line to <container>/Data/pt_endfield.log.
 void EndfieldRuntimeLog(NSString *format, ...) NS_FORMAT_FUNCTION(1, 2);
 
@@ -61,6 +67,18 @@ void *EndfieldRuntimeFindCodeCave(void *site, size_t size);
 /// Returns the address of the first match, or NULL. Used to locate a patch site in a build
 /// without hard-coding a file offset.
 void *EndfieldRuntimeScanText(const uint32_t *masks, const uint32_t *values, size_t count);
+
+/// Like EndfieldRuntimeScanText but for two sites that are not adjacent: find `head` at p such
+/// that (p[1] & nextMask) == nextValue and p[gapBytes/4] == tail. Returns p, or NULL. Used for
+/// the haptics gates (0x1D0 apart) so they survive a version change without fixed offsets.
+void *EndfieldRuntimeScanTextPair(uint32_t head, uint32_t nextMask, uint32_t nextValue,
+                                  uint32_t tail, size_t gapBytes);
+
+/// As above, but with masks on the head and tail too, so a register-allocation change (e.g.
+/// `cmp x0, x25` becoming `cmp x0, x24`) still matches.
+void *EndfieldRuntimeScanTextPairMasked(uint32_t head, uint32_t headMask,
+                                        uint32_t nextMask, uint32_t nextValue,
+                                        uint32_t tail, uint32_t tailMask, size_t gapBytes);
 
 /// True when `header` is the loaded UnityFramework image (used from a dyld add-image callback).
 bool EndfieldRuntimeImageIsUnityFramework(const void *header);

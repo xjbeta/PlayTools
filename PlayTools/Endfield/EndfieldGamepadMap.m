@@ -67,25 +67,35 @@ static void *ef_static_fields(void) {
     return cached;
 }
 
-static int ef_read(int offset) {
+/// Resolve a DeviceInfo static int field by name; fall back to a fixed offset when the name does
+/// not resolve, so a field rename degrades instead of breaking.
+static volatile int *ef_field(const char *name, int fallbackOffset) {
+    void *klass = EndfieldRuntimeClass("Beyond", "DeviceInfo");
+    if (klass != NULL) {
+        void *address = EndfieldRuntimeStaticFieldAddress(klass, name);
+        if (address != NULL) { return (volatile int *)address; }
+    }
     void *fields = ef_static_fields();
-    if (fields == NULL) { return -1; }
-    return *(volatile int *)((char *)fields + offset);
+    return fields == NULL ? NULL : (volatile int *)((char *)fields + fallbackOffset);
 }
 
-static void ef_write(int offset, int value) {
-    void *fields = ef_static_fields();
-    if (fields == NULL) { return; }
-    *(volatile int *)((char *)fields + offset) = value;
+static int ef_read(const char *name, int fallbackOffset) {
+    volatile int *field = ef_field(name, fallbackOffset);
+    return field == NULL ? -1 : *field;
+}
+
+static void ef_write(const char *name, int fallbackOffset, int value) {
+    volatile int *field = ef_field(name, fallbackOffset);
+    if (field != NULL) { *field = value; }
 }
 
 /// Hold platform at 8 while the game is in gamepad mode. Idempotent and cheap: in steady state
 /// the `platform == 8` check returns without writing, so this does no work per frame.
 static void ef_force_platform_if_gamepad(void) {
-    if (ef_read(EF_OFF_INPUTTYPE) != EF_INPUTTYPE_GAMEPAD) { return; }
-    if (ef_read(EF_OFF_PLATFORM) == EF_PLATFORM_MOBILE) { return; }
+    if (ef_read("inputType", EF_OFF_INPUTTYPE) != EF_INPUTTYPE_GAMEPAD) { return; }
+    if (ef_read("platform", EF_OFF_PLATFORM) == EF_PLATFORM_MOBILE) { return; }
     if (ef_now_ns() < ef_suppress_until_ns) { return; }   // a key press is in flight
-    ef_write(EF_OFF_PLATFORM, EF_PLATFORM_MOBILE);
+    ef_write("platform", EF_OFF_PLATFORM, EF_PLATFORM_MOBILE);
 }
 
 /// Replacement for Beyond.Input.InputManager.CheckUsingController. Runs the game's own check
@@ -114,6 +124,7 @@ static BOOL ef_install_device_hook(void) {
         return NO;
     }
     ef_check_original = previous;
+    EndfieldRuntimeNote("gamepad map", true);
     EndfieldRuntimeLog(@"[ZEF] gamepad map: CheckUsingController hook installed @ %p", previous);
     return YES;
 }
@@ -179,8 +190,8 @@ static id ef_key_monitor = nil;
                                           dispatch_time(DISPATCH_TIME_NOW, (int64_t)(10.0 * NSEC_PER_SEC)),
                                           (uint64_t)(10.0 * NSEC_PER_SEC), 0);
             }
-            int inputType = ef_read(EF_OFF_INPUTTYPE);
-            int platform = ef_read(EF_OFF_PLATFORM);
+            int inputType = ef_read("inputType", EF_OFF_INPUTTYPE);
+            int platform = ef_read("platform", EF_OFF_PLATFORM);
             // One state line a minute (12 s startup, 60 s guardian); it doubles as the heartbeat.
             if (ticks % (guardianCadence ? 6 : 12) == 0) {
                 EndfieldRuntimeLog(@"[ZEF] gamepad map: inputType=%d platform=%d",
@@ -191,7 +202,7 @@ static id ef_key_monitor = nil;
                 // corrected immediately.
                 ef_suppress_until_ns = 0;
             } else if (platform != EF_PLATFORM_MOBILE && ef_now_ns() >= ef_suppress_until_ns) {
-                ef_write(EF_OFF_PLATFORM, EF_PLATFORM_MOBILE);
+                ef_write("platform", EF_OFF_PLATFORM, EF_PLATFORM_MOBILE);
                 EndfieldRuntimeLog(@"[ZEF] gamepad map: platform %d -> 8 (guardian)", platform);
             }
         });
@@ -215,9 +226,9 @@ void EndfieldGamepadMapKeyboardActivity(void) {
     // at 8 (mobile binding), which keeps the keyboard out of the device set, so the game never
     // runs its own switch back to keyboard/mouse. Release platform to 2 for a short window and
     // let the game switch; if it does not, the hook/guardian restores 8 afterwards.
-    if (ef_read(EF_OFF_INPUTTYPE) != EF_INPUTTYPE_GAMEPAD) { return; }
-    if (ef_read(EF_OFF_PLATFORM) != EF_PLATFORM_MOBILE) { return; }
-    ef_write(EF_OFF_PLATFORM, EF_PLATFORM_DESKTOP);
+    if (ef_read("inputType", EF_OFF_INPUTTYPE) != EF_INPUTTYPE_GAMEPAD) { return; }
+    if (ef_read("platform", EF_OFF_PLATFORM) != EF_PLATFORM_MOBILE) { return; }
+    ef_write("platform", EF_OFF_PLATFORM, EF_PLATFORM_DESKTOP);
     ef_suppress_until_ns = ef_now_ns() + 3LL * 1000000000LL;
     EndfieldRuntimeLog(@"[ZEF] gamepad map: keyboard activity -> platform 8 -> 2");
 }
