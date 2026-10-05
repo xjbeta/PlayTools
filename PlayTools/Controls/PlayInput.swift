@@ -108,6 +108,15 @@ import GameController
             EndfieldGamepadMapStart()
             EndfieldMouseDeltaStart()
         }
+
+        // Endfield graphics fixes: resolved by name at runtime, independent of the plugin.
+        // Each module checks the bundle identifier itself and no-ops when the game is not ready.
+        if PlaySettings.shared.endfieldResolutionFix {
+            EndfieldResolutionFixStart()
+        }
+        if PlaySettings.shared.endfieldFpsFix {
+            EndfieldFpsFixStart()
+        }
     }
 
     private func simulateGCKeyboardDisconnect() {

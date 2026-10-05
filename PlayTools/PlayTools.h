@@ -37,3 +37,9 @@ void EndfieldGamepadMapKeyboardActivity(void);
 
 /// Endfield: installs the GCMouse delta scaling (see PlayTools/Endfield/EndfieldMouseDelta.h).
 void EndfieldMouseDeltaStart(void);
+
+/// Endfield: forces the render resolution at runtime (see Endfield/EndfieldResolutionFix.h).
+void EndfieldResolutionFixStart(void);
+
+/// Endfield: doubles the target frame rate at runtime (see Endfield/EndfieldFpsFix.h).
+void EndfieldFpsFixStart(void);

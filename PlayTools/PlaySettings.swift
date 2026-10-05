@@ -165,6 +165,12 @@ let settings = PlaySettings.shared
     /// Endfield: master switch for everything that needs the libUnityDesktopMode plugin.
     @objc lazy var endfieldPluginFixes = extraSettingsData.endfieldPluginFixes
 
+    /// Endfield: force the render resolution at runtime (no plugin needed).
+    @objc lazy var endfieldResolutionFix = extraSettingsData.endfieldResolutionFix
+
+    /// Endfield: double the target frame rate at runtime (no plugin needed).
+    @objc lazy var endfieldFpsFix = extraSettingsData.endfieldFpsFix
+
     private lazy var pendingLandscapeUIViewControllerNames = extraSettingsData.forceUIViewLandscapeArgs
 
     @objc func landscapeUIViewControllerNames() -> [String] {
@@ -362,5 +368,9 @@ struct ExtraAppSettingsData: Codable {
     var endfieldMouseDeltaScale: Double = 1.0
     /// Endfield: master switch for everything that needs the libUnityDesktopMode plugin.
     var endfieldPluginFixes = false
+    /// Endfield: force the render resolution at runtime (no plugin needed).
+    var endfieldResolutionFix = false
+    /// Endfield: double the target frame rate at runtime (no plugin needed).
+    var endfieldFpsFix = false
     var forcedRefreshRate: Int = 0
 }
