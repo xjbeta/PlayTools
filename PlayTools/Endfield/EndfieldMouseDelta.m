@@ -12,20 +12,12 @@
 //
 
 #import "EndfieldMouseDelta.h"
+#import "EndfieldRuntime.h"
 
 #import <Foundation/Foundation.h>
 #import <PlayTools/PlayTools-Swift.h>
 #include <objc/message.h>
 #include <objc/runtime.h>
-
-static void ef_md_log(NSString *message) {
-    NSString *line = [NSString stringWithFormat:@"%@ %@\n", [NSDate date], message];
-    NSString *path = [NSHomeDirectory() stringByAppendingPathComponent:@"pt_endfield.log"];
-    FILE *file = fopen(path.UTF8String, "a");
-    if (file == NULL) { return; }
-    fputs(line.UTF8String, file);
-    fclose(file);
-}
 
 static IMP ef_original_set_mouse_moved = NULL;
 
@@ -45,7 +37,7 @@ static void ef_set_mouse_moved_handler(id self, SEL _cmd,
 }
 
 void EndfieldMouseDeltaStart(void) {
-    if (![[[NSBundle mainBundle] bundleIdentifier] isEqualToString:@"com.hypergryph.endfield"]) {
+    if (!EndfieldRuntimeIsGame()) {
         return;
     }
     if (ef_original_set_mouse_moved != NULL) { return; }
@@ -54,9 +46,9 @@ void EndfieldMouseDeltaStart(void) {
     if (mouseInput == Nil) { return; }
     Method method = class_getInstanceMethod(mouseInput, setter);
     if (method == NULL) {
-        ef_md_log(@"[ZEF] mouse delta: GCMouseInput.setMouseMovedHandler not found");
+        EndfieldRuntimeLog(@"[ZEF] mouse delta: GCMouseInput.setMouseMovedHandler not found");
         return;
     }
     ef_original_set_mouse_moved = method_setImplementation(method, (IMP)ef_set_mouse_moved_handler);
-    ef_md_log(@"[ZEF] mouse delta: scaling installed (x customScaler x endfieldMouseDeltaScale)");
+    EndfieldRuntimeLog(@"[ZEF] mouse delta: scaling installed (x customScaler x endfieldMouseDeltaScale)");
 }
