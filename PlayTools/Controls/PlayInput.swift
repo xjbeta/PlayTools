@@ -117,6 +117,10 @@ import GameController
         if PlaySettings.shared.endfieldFpsFix {
             EndfieldFpsFixStart()
         }
+        if PlaySettings.shared.endfieldHaptics {
+            EndfieldHapticsStart()
+        }
+
         // One summary line once the fixes have had time to install (or fail).
         DispatchQueue.main.asyncAfter(deadline: .now() + 15, qos: .utility) {
             EndfieldRuntimeLogStatus()

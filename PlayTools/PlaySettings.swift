@@ -171,6 +171,9 @@ let settings = PlaySettings.shared
     /// Endfield: double the target frame rate at runtime (no plugin needed).
     @objc lazy var endfieldFpsFix = extraSettingsData.endfieldFpsFix
 
+    /// Endfield: gamepad haptics fix (controller matching + 4-motor output).
+    @objc lazy var endfieldHaptics = extraSettingsData.endfieldHaptics
+
     private lazy var pendingLandscapeUIViewControllerNames = extraSettingsData.forceUIViewLandscapeArgs
 
     @objc func landscapeUIViewControllerNames() -> [String] {
@@ -372,5 +375,7 @@ struct ExtraAppSettingsData: Codable {
     var endfieldResolutionFix = false
     /// Endfield: double the target frame rate at runtime (no plugin needed).
     var endfieldFpsFix = false
+    /// Endfield: gamepad haptics fix (controller matching + 4-motor output).
+    var endfieldHaptics = false
     var forcedRefreshRate: Int = 0
 }
