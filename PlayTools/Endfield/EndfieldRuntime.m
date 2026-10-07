@@ -99,7 +99,6 @@ typedef void *(*ef_class_get_method_from_name_fn)(void *klass, const char *name,
 typedef void *(*ef_class_get_field_from_name_fn)(void *klass, const char *name);
 typedef size_t (*ef_field_get_offset_fn)(void *field);
 typedef void *(*ef_class_get_static_field_data_fn)(void *klass);
-typedef void *(*ef_resolve_icall_fn)(const char *name);
 
 typedef struct {
     ef_domain_get_fn domain_get;
@@ -110,7 +109,6 @@ typedef struct {
     ef_class_get_field_from_name_fn class_get_field_from_name;
     ef_field_get_offset_fn field_get_offset;
     ef_class_get_static_field_data_fn class_get_static_field_data;
-    ef_resolve_icall_fn resolve_icall;
     bool ready;
 } ef_il2cpp_api;
 
@@ -136,7 +134,6 @@ static bool ef_rt_load_api(void) {
         (ef_field_get_offset_fn)ef_rt_symbol("il2cpp_field_get_offset");
     ef_api.class_get_static_field_data =
         (ef_class_get_static_field_data_fn)ef_rt_symbol("il2cpp_class_get_static_field_data");
-    ef_api.resolve_icall = (ef_resolve_icall_fn)ef_rt_symbol("il2cpp_resolve_icall");
     ef_api.ready = ef_api.domain_get && ef_api.domain_get_assemblies
         && ef_api.assembly_get_image && ef_api.class_from_name
         && ef_api.class_get_method_from_name && ef_api.class_get_field_from_name
@@ -255,11 +252,6 @@ void *EndfieldRuntimeStaticFieldAddress(void *klass, const char *name) {
     return (char *)data + ef_api.field_get_offset(field);
 }
 
-void *EndfieldRuntimeResolveIcall(const char *name) {
-    if (!ef_rt_load_api() || ef_api.resolve_icall == NULL) { return NULL; }
-    return ef_api.resolve_icall(name);
-}
-
 void *EndfieldRuntimeImageBase(void) {
     uint32_t count = _dyld_image_count();
     for (uint32_t i = 0; i < count; i++) {
@@ -286,93 +278,6 @@ bool EndfieldRuntimeImageIsUnityFramework(const void *header) {
 void *EndfieldRuntimeStaticFieldData(void *klass) {
     if (klass == NULL || !ef_rt_load_api()) { return NULL; }
     return ef_api.class_get_static_field_data(klass);
-}
-
-// ---------------------------------------------------------------------------
-// Code cave search for runtime __TEXT patches (used by the gamepad map hook).
-// ---------------------------------------------------------------------------
-
-// bl reaches +/-128 MB.
-#define EF_RT_BRANCH_REACH 0x08000000ULL
-#define EF_RT_MAX_SECTIONS 96
-
-typedef struct { uintptr_t start; uintptr_t end; } ef_rt_span;
-
-static BOOL ef_rt_zero_filled(uintptr_t address, size_t length) {
-    const volatile unsigned char *bytes = (const volatile unsigned char *)address;
-    for (size_t i = 0; i < length; i++) {
-        if (bytes[i] != 0) { return NO; }
-    }
-    return YES;
-}
-
-static void ef_rt_sort_spans(ef_rt_span *spans, size_t count) {
-    for (size_t i = 1; i < count; i++) {
-        ef_rt_span key = spans[i];
-        size_t j = i;
-        while (j > 0 && spans[j - 1].start > key.start) {
-            spans[j] = spans[j - 1];
-            j--;
-        }
-        spans[j] = key;
-    }
-}
-
-void *EndfieldRuntimeFindCodeCave(void *site, size_t size) {
-    void *base = EndfieldRuntimeImageBase();
-    if (base == NULL || size == 0) { return NULL; }
-    const struct mach_header_64 *header = (const struct mach_header_64 *)base;
-    if (header->magic != MH_MAGIC_64) { return NULL; }
-    const unsigned char *cursor = (const unsigned char *)base + sizeof(struct mach_header_64);
-    const unsigned char *limit = cursor + header->sizeofcmds;
-
-    uintptr_t best = 0;
-    uintptr_t bestDistance = UINTPTR_MAX;
-
-    for (uint32_t i = 0; i < header->ncmds; i++) {
-        if (cursor + sizeof(struct load_command) > limit) { break; }
-        const struct load_command *command = (const struct load_command *)cursor;
-        if (command->cmdsize < sizeof(struct load_command) || cursor + command->cmdsize > limit) {
-            break;
-        }
-        if (command->cmd == LC_SEGMENT_64) {
-            const struct segment_command_64 *segment = (const struct segment_command_64 *)command;
-            if (strncmp(segment->segname, "__TEXT", sizeof(segment->segname)) == 0
-                && segment->nsects > 0 && segment->nsects <= EF_RT_MAX_SECTIONS) {
-                const struct section_64 *sections =
-                    (const struct section_64 *)(cursor + sizeof(struct segment_command_64));
-                ef_rt_span spans[EF_RT_MAX_SECTIONS];
-                for (uint32_t s = 0; s < segment->nsects; s++) {
-                    spans[s].start = (uintptr_t)(base + sections[s].addr);
-                    spans[s].end = spans[s].start + (uintptr_t)sections[s].size;
-                }
-                ef_rt_sort_spans(spans, segment->nsects);
-
-                for (uint32_t s = 0; s <= segment->nsects; s++) {
-                    uintptr_t gapStart = s == 0 ? (uintptr_t)(base + segment->vmaddr)
-                                                : spans[s - 1].end;
-                    uintptr_t gapEnd = s < segment->nsects
-                        ? spans[s].start
-                        : (uintptr_t)(base + segment->vmaddr + segment->vmsize);
-                    if (gapEnd <= gapStart || gapEnd - gapStart < size) { continue; }
-                    uintptr_t candidate = (gapStart + 7) & ~(uintptr_t)7;
-                    if (candidate + size > gapEnd) { continue; }
-                    intptr_t delta = (intptr_t)candidate - (intptr_t)(uintptr_t)site;
-                    if (delta < -(intptr_t)EF_RT_BRANCH_REACH
-                        || delta > (intptr_t)EF_RT_BRANCH_REACH - 4) {
-                        continue;
-                    }
-                    uintptr_t distance = delta < 0 ? (uintptr_t)(-delta) : (uintptr_t)delta;
-                    if (distance >= bestDistance) { continue; }
-                    if (!ef_rt_zero_filled(candidate, size)) { continue; }
-                    bestDistance = distance;
-                    best = candidate;
-                }
-            }
-        }
-        cursor += command->cmdsize;
-    }
-    return (void *)best;
 }
 
 void *EndfieldRuntimeScanText(const uint32_t *masks, const uint32_t *values, size_t count) {
@@ -407,56 +312,6 @@ void *EndfieldRuntimeScanText(const uint32_t *masks, const uint32_t *values, siz
                             if ((words[k + j] & masks[j]) != values[j]) { matched = false; break; }
                         }
                         if (matched) { return (void *)&words[k]; }
-                    }
-                }
-            }
-        }
-        cursor += command->cmdsize;
-    }
-    return NULL;
-}
-
-void *EndfieldRuntimeScanTextPair(uint32_t head, uint32_t nextMask, uint32_t nextValue,
-                                  uint32_t tail, size_t gapBytes) {
-    return EndfieldRuntimeScanTextPairMasked(head, 0xFFFFFFFFu, nextMask, nextValue,
-                                             tail, 0xFFFFFFFFu, gapBytes);
-}
-
-void *EndfieldRuntimeScanTextPairMasked(uint32_t head, uint32_t headMask,
-                                        uint32_t nextMask, uint32_t nextValue,
-                                        uint32_t tail, uint32_t tailMask, size_t gapBytes) {
-    if (gapBytes == 0 || (gapBytes % 4) != 0) { return NULL; }
-    void *base = EndfieldRuntimeImageBase();
-    if (base == NULL) { return NULL; }
-    const struct mach_header_64 *header = (const struct mach_header_64 *)base;
-    if (header->magic != MH_MAGIC_64) { return NULL; }
-    const unsigned char *cursor = (const unsigned char *)base + sizeof(struct mach_header_64);
-    const unsigned char *limit = cursor + header->sizeofcmds;
-    size_t gapWords = gapBytes / 4;
-
-    for (uint32_t i = 0; i < header->ncmds; i++) {
-        if (cursor + sizeof(struct load_command) > limit) { break; }
-        const struct load_command *command = (const struct load_command *)cursor;
-        if (command->cmdsize < sizeof(struct load_command) || cursor + command->cmdsize > limit) {
-            break;
-        }
-        if (command->cmd == LC_SEGMENT_64) {
-            const struct segment_command_64 *segment = (const struct segment_command_64 *)command;
-            if (strncmp(segment->segname, "__TEXT", sizeof(segment->segname)) == 0) {
-                const struct section_64 *sections =
-                    (const struct section_64 *)(cursor + sizeof(struct segment_command_64));
-                for (uint32_t s = 0; s < segment->nsects; s++) {
-                    if (strncmp(sections[s].sectname, "__text", sizeof(sections[s].sectname)) != 0) {
-                        continue;
-                    }
-                    uint32_t *words = (uint32_t *)((uintptr_t)base + sections[s].addr);
-                    size_t countWords = sections[s].size / 4;
-                    if (countWords <= gapWords + 1) { continue; }
-                    for (size_t k = 0; k + gapWords + 1 <= countWords; k++) {
-                        if ((words[k] & headMask) != head) { continue; }
-                        if ((words[k + 1] & nextMask) != nextValue) { continue; }
-                        if ((words[k + gapWords] & tailMask) != tail) { continue; }
-                        return (void *)&words[k];
                     }
                 }
             }
