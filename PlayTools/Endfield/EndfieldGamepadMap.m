@@ -2,131 +2,137 @@
 //  EndfieldGamepadMap.m
 //  PlayTools
 //
-//  See EndfieldGamepadMap.h. The game's DeviceInfo.platform decides what the view button does:
-//    platform 2 -> desktop binding (view button switches input mode)
-//    platform 8 -> mobile binding  (view button opens the map)
-//  While the game is in gamepad mode (inputType == 2) nothing keeps platform at 8, so the map
-//  key breaks.
+//  See EndfieldGamepadMap.h.
 //
-//  Two mechanisms, both aimed at the same field:
+//  DeviceInfo.isMobile decides whether the whole game behaves like a mobile device (Unity
+//  InputSystem) or a desktop one (Rewired): the gamepad buttons, the analog triggers, and the
+//  in-game screens that hand gamepad buttons to their UI (the gacha screen among them). On this
+//  machine DeviceInfo.platform is 2 (PC), so isMobile is false and the game takes the desktop
+//  path, where the view button means "menu" and some screens never see the buttons they expect.
 //
-//    * An event hook on the game's own device decision. Beyond.Input.InputManager
-//      .CheckUsingController is the managed method that switches the input device; it is
-//      resolved by name and its entry replaced. After the game has decided, this module mirrors
-//      the decision into DeviceInfo.platform, so the switch is immediate (no guardian lag).
-//      Being a managed method resolved by name, this works on any build - the CN and
-//      international binaries share the same managed code.
-//    * A slow guardian. The game can still move `platform` without a switch, so a 10 s timer
-//      re-asserts 8 while inputType == 2. It is the safety net for anything the hook misses.
+//  This module rewrites DeviceInfo.get_isMobile to answer from the current input mode: true while
+//  the game is being played with the pad (inputType == 2) and the desktop answer otherwise. The
+//  replacement is a small trampoline written over the method entry that calls the game's own
+//  DeviceInfo.get_inputType:
 //
-//  A key press while the game is in gamepad mode releases platform to 2 for a moment - the
-//  game's own switch back to keyboard/mouse needs that - and the hook/guardian leave the field
-//  alone for that window.
+//      stp  x29, x30, [sp, #-16]!      ; save LR: the bl below overwrites it
+//      bl   DeviceInfo.get_inputType
+//      ldp  x29, x30, [sp], #16
+//      cmp  w0, #2
+//      cset w0, eq
+//      ret
 //
-//  Shared Endfield plumbing (il2cpp lookup by name, static fields, logging, bundle gate, memory
-//  writes) lives in EndfieldRuntime; this module only owns the gamepad logic.
+//  So the gamepad - buttons, triggers and the screens that use them - gets the mobile behaviour
+//  while a pad is in use, and keyboard/mouse play is left alone. The real isMobile (platform 8 /
+//  11) is deliberately not consulted: platform is 2 here, so the input mode is the whole story.
 //
-//    DeviceInfo static fields: platform @ +0x24, inputType @ +0x28
+//  isMobile is also what DeviceInfo.get_supportsTouch answers, and the game's CheckUsingController
+//  only looks at supportsTouch to choose whether to watch the touch or the keyboard for a device
+//  change. Left alone, supportsTouch would be true whenever the pad is in use, so the game would
+//  watch the touch branch (touchCount only) and a key press would never switch it back. Only the
+//  gamepad and keyboard/mouse modes are wanted here, so supportsTouch is pinned to false:
+//
+//      mov  w0, #0
+//      ret
+//
+//  Everything is resolved by name; a game update degrades to "no patch".
 //
 
 #import "EndfieldGamepadMap.h"
 #import "EndfieldRuntime.h"
 
 #import <Foundation/Foundation.h>
-#include <objc/message.h>
-#include <objc/runtime.h>
-#include <time.h>
-
-#define EF_OFF_PLATFORM            0x24
-#define EF_OFF_INPUTTYPE           0x28
 
 #define EF_INPUTTYPE_GAMEPAD 2
-#define EF_PLATFORM_DESKTOP  2
-#define EF_PLATFORM_MOBILE   8
 
-// While a key is being pressed the hook and guardian leave platform alone for a moment, so the
-// game can run its own switch back to keyboard/mouse (see EndfieldGamepadMapKeyboardActivity).
-static volatile int64_t ef_suppress_until_ns = 0;
+// stp x29, x30, [sp, #-16]! ; bl <get_inputType> ; ldp x29, x30, [sp], #16 ; cmp w0,#2 ;
+// cset w0, eq ; ret
+static const uint32_t EF_STP_LR   = 0xA9BF7BFDu;
+static const uint32_t EF_LDP_LR   = 0xA8C17BFDu;
+static const uint32_t EF_CMP_W0_2 = 0x7100081Fu;
+static const uint32_t EF_CSET_EQ  = 0x1A9F17E0u;
+static const uint32_t EF_MOV_W0_0 = 0x52800000u;
+static const uint32_t EF_RET      = 0xD65F03C0u;
 
-// Native entry of CheckUsingController saved when the hook is installed.
-static void *ef_check_original = NULL;
+// Set once the patch has landed, so the timer stops retrying.
+static BOOL ef_done = NO;
 
-/// Monotonic nanoseconds; used only for the short window after a key press.
-static int64_t ef_now_ns(void) {
-    struct timespec ts;
-    clock_gettime(CLOCK_MONOTONIC, &ts);
-    return (int64_t)ts.tv_sec * 1000000000LL + ts.tv_nsec;
+static uint32_t ef_u32(const void *p) { return *(const uint32_t *)p; }
+
+/// Encode `bl` from `from` to `to`; 0 when out of reach.
+static uint32_t ef_bl_encode(uintptr_t from, uintptr_t to) {
+    int64_t delta = (int64_t)to - (int64_t)from;
+    if (delta % 4 != 0) { return 0; }
+    int64_t words = delta >> 2;
+    if (words < -(1 << 25) || words >= (1 << 25)) { return 0; }
+    return 0x94000000u | (uint32_t)(words & 0x3FFFFFF);
 }
 
-static void *ef_static_fields(void) {
-    static void *cached = NULL;
-    if (cached != NULL) { return cached; }
-    void *klass = EndfieldRuntimeClass("Beyond", "DeviceInfo");
-    if (klass == NULL) { return NULL; }
-    cached = EndfieldRuntimeStaticFieldData(klass);
-    return cached;
-}
+/// Rewrite DeviceInfo.get_isMobile to return `inputType == 2`, so the game takes the mobile path
+/// while a gamepad is in use and the desktop path otherwise. Returns YES once the patch is in
+/// place and NO while it cannot be reached.
+static BOOL ef_patch_is_mobile(void) {
+    if (ef_done) { return YES; }
 
-/// Resolve a DeviceInfo static int field by name; fall back to a fixed offset when the name does
-/// not resolve, so a field rename degrades instead of breaking.
-static volatile int *ef_field(const char *name, int fallbackOffset) {
-    void *klass = EndfieldRuntimeClass("Beyond", "DeviceInfo");
-    if (klass != NULL) {
-        void *address = EndfieldRuntimeStaticFieldAddress(klass, name);
-        if (address != NULL) { return (volatile int *)address; }
+    void *device = EndfieldRuntimeClass("Beyond", "DeviceInfo");
+    if (device == NULL) { return NO; }
+    uintptr_t isMobile = (uintptr_t)EndfieldRuntimeMethodPointer(
+        EndfieldRuntimeMethod(device, "get_isMobile", 0));
+    uintptr_t inputType = (uintptr_t)EndfieldRuntimeMethodPointer(
+        EndfieldRuntimeMethod(device, "get_inputType", 0));
+    if (isMobile == 0 || inputType == 0) { return NO; }
+
+    uint32_t call = ef_bl_encode(isMobile + 4, inputType);   // bl sits at entry+4
+    if (call == 0) { return NO; }
+    uint32_t code[6] = { EF_STP_LR, call, EF_LDP_LR, EF_CMP_W0_2, EF_CSET_EQ, EF_RET };
+
+    BOOL already = YES;
+    for (int i = 0; i < 6; i++) {
+        if (ef_u32((const void *)(isMobile + (uintptr_t)i * 4)) != code[i]) { already = NO; break; }
     }
-    void *fields = ef_static_fields();
-    return fields == NULL ? NULL : (volatile int *)((char *)fields + fallbackOffset);
-}
-
-static int ef_read(const char *name, int fallbackOffset) {
-    volatile int *field = ef_field(name, fallbackOffset);
-    return field == NULL ? -1 : *field;
-}
-
-static void ef_write(const char *name, int fallbackOffset, int value) {
-    volatile int *field = ef_field(name, fallbackOffset);
-    if (field != NULL) { *field = value; }
-}
-
-/// Hold platform at 8 while the game is in gamepad mode. Idempotent and cheap: in steady state
-/// the `platform == 8` check returns without writing, so this does no work per frame.
-static void ef_force_platform_if_gamepad(void) {
-    if (ef_read("inputType", EF_OFF_INPUTTYPE) != EF_INPUTTYPE_GAMEPAD) { return; }
-    if (ef_read("platform", EF_OFF_PLATFORM) == EF_PLATFORM_MOBILE) { return; }
-    if (ef_now_ns() < ef_suppress_until_ns) { return; }   // a key press is in flight
-    ef_write("platform", EF_OFF_PLATFORM, EF_PLATFORM_MOBILE);
-}
-
-/// Replacement for Beyond.Input.InputManager.CheckUsingController. Runs the game's own check
-/// first, then mirrors the resulting device into platform.
-static void ef_check_using_controller(void *self) {
-    void *original = ef_check_original;
-    if (original == NULL) { return; }
-    ((void (*)(void *))original)(self);
-    ef_force_platform_if_gamepad();
-}
-
-/// Installs the managed hook. Idempotent; returns NO whenever it cannot be sure of itself (the
-/// engine is not ready, the class/method is missing, the write is refused) - the guardian keeps
-/// running either way.
-static BOOL ef_install_device_hook(void) {
-    if (ef_check_original != NULL) { return YES; }
-
-    void *klass = EndfieldRuntimeClass("Beyond.Input", "InputManager");
-    void *method = EndfieldRuntimeMethod(klass, "CheckUsingController", 0);
-    void *original = EndfieldRuntimeMethodPointer(method);
-    if (original == NULL) { return NO; }
-
-    void *previous = EndfieldRuntimeHookMethod(method, (void *)ef_check_using_controller);
-    if (previous == NULL) {
-        EndfieldRuntimeLog(@"[ZEF] gamepad map: CheckUsingController hook write failed");
-        return NO;
+    if (already) {
+        ef_done = YES;
+        return YES;
     }
-    ef_check_original = previous;
-    EndfieldRuntimeNote("gamepad map", true);
-    EndfieldRuntimeLog(@"[ZEF] gamepad map: CheckUsingController hook installed @ %p", previous);
-    return YES;
+    if (EndfieldRuntimeWriteMemory((void *)isMobile, code, sizeof(code))) {
+        ef_done = YES;
+        EndfieldRuntimeLog(@"[ZEF] gamepad map: isMobile -> (inputType==%d) @ %p",
+                           EF_INPUTTYPE_GAMEPAD, (void *)isMobile);
+        return YES;
+    }
+    return NO;
+}
+
+/// Pin DeviceInfo.get_supportsTouch to false.
+///
+/// supportsTouch is DeviceInfo.isMobile (SupportsInputType(Touch)); the game's
+/// CheckUsingController only looks at supportsTouch to choose which branch watches for a device
+/// change. While isMobile is true (gamepad), supportsTouch would also be true, so the game takes
+/// the touch branch - which only watches touchCount - and a key press is never seen, leaving the
+/// game stuck in gamepad mode. We keep only the gamepad and keyboard/mouse modes here, so touch is
+/// pinned off: the keyboard branch runs and the switch target resolves to keyboard/mouse.
+static BOOL ef_patch_supports_touch(void) {
+    static BOOL done = NO;
+    if (done) { return YES; }
+
+    void *device = EndfieldRuntimeClass("Beyond", "DeviceInfo");
+    if (device == NULL) { return NO; }
+    uintptr_t supportsTouch = (uintptr_t)EndfieldRuntimeMethodPointer(
+        EndfieldRuntimeMethod(device, "get_supportsTouch", 0));
+    if (supportsTouch == 0) { return NO; }
+
+    uint32_t code[2] = { EF_MOV_W0_0, EF_RET };   // mov w0, #0 ; ret
+    if (ef_u32((const void *)supportsTouch) == code[0] &&
+        ef_u32((const void *)(supportsTouch + 4)) == code[1]) {
+        done = YES;
+        return YES;
+    }
+    if (EndfieldRuntimeWriteMemory((void *)supportsTouch, code, sizeof(code))) {
+        done = YES;
+        EndfieldRuntimeLog(@"[ZEF] gamepad map: supportsTouch -> false @ %p", (void *)supportsTouch);
+        return YES;
+    }
+    return NO;
 }
 
 @interface EFGamepadMap : NSObject @end
@@ -136,74 +142,25 @@ static BOOL ef_install_device_hook(void) {
 // return and cancelled before it can fire. Keep the strong reference here instead.
 static dispatch_source_t ef_timer = nil;
 
-// The key monitor token must be retained too: releasing the returned token removes the monitor.
-static id ef_key_monitor = nil;
-
 + (void)start {
     static dispatch_once_t once;
     dispatch_once(&once, ^{
         EndfieldRuntimeLog(@"[ZEF] gamepad map: start");
 
-        // Watch real key presses. This must not depend on PlayTools' keymapping being enabled:
-        // ControlMode only installs its keyboard handler when keymapping is on, and Endfield runs
-        // with it off. The framework is compiled against the iOS SDK (no AppKit headers), so
-        // NSEvent is reached through the ObjC runtime; the app runs on macOS, where it exists.
-        Class nsEvent = objc_getClass("NSEvent");
-        SEL addMonitor = sel_registerName("addLocalMonitorForEventsMatchingMask:handler:");
-        if (nsEvent != Nil) {
-            NSUInteger keyDownMask = 1 << 10; // NSEventMaskKeyDown
-            id (^handler)(id) = ^id(id event) {
-                EndfieldGamepadMapKeyboardActivity();
-                return event;
-            };
-            ef_key_monitor = ((id (*)(id, SEL, NSUInteger, id))objc_msgSend)((id)nsEvent,
-                                                                            addMonitor,
-                                                                            keyDownMask,
-                                                                            handler);
-        }
-
         // A private queue, not the main queue: Unity does not service the main dispatch queue
         // on its own (PlayTools drains it with a CADisplayLink), so this must not depend on it.
+        // The engine needs a moment to come up, so the patch is retried until it lands.
         dispatch_queue_t queue = dispatch_queue_create("playcover.endfield.gamepadmap",
                                                        DISPATCH_QUEUE_SERIAL);
         dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, queue);
-        // Startup cadence is 1 s, so the hook is installed and the initial platform corrected as
-        // soon as the engine is reachable. It is re-armed to the guardian's 10 s once the hook
-        // is in place - the hook is what makes a switch instant, the guardian is only a net.
         dispatch_source_set_timer(timer, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)),
                                   (uint64_t)(1.0 * NSEC_PER_SEC), 0);
-        __block NSInteger ticks = 0;
-        __block BOOL reportedNotReady = NO;
-        __block BOOL guardianCadence = NO;
         dispatch_source_set_event_handler(timer, ^{
-            ticks += 1;
-            if (ef_static_fields() == NULL) {
-                if (!reportedNotReady) {
-                    reportedNotReady = YES;
-                    EndfieldRuntimeLog(@"[ZEF] gamepad map: DeviceInfo not ready");
-                }
-                return;
-            }
-            if (ef_check_original == NULL && ef_install_device_hook()) {
-                guardianCadence = YES;
-                dispatch_source_set_timer(timer,
-                                          dispatch_time(DISPATCH_TIME_NOW, (int64_t)(10.0 * NSEC_PER_SEC)),
-                                          (uint64_t)(10.0 * NSEC_PER_SEC), 0);
-            }
-            int inputType = ef_read("inputType", EF_OFF_INPUTTYPE);
-            int platform = ef_read("platform", EF_OFF_PLATFORM);
-            // One state line a minute (12 s startup, 60 s guardian); it doubles as the heartbeat.
-            if (ticks % (guardianCadence ? 6 : 12) == 0) {
-                EndfieldRuntimeLog(@"[ZEF] gamepad map: inputType=%d platform=%d",
-                                   inputType, platform);
-            }
-            if (inputType != EF_INPUTTYPE_GAMEPAD) {
-                // Left gamepad mode: drop any key-press suppression so switching back is
-                // corrected immediately.
-                ef_suppress_until_ns = 0;
-            } else if (platform != EF_PLATFORM_MOBILE && ef_now_ns() >= ef_suppress_until_ns) {
-                ef_write("platform", EF_OFF_PLATFORM, EF_PLATFORM_MOBILE);
-                EndfieldRuntimeLog(@"[ZEF] gamepad map: platform %d -> 8 (guardian)", platform);
+            BOOL mobile = ef_patch_is_mobile();
+            BOOL touch = ef_patch_supports_touch();
+            if (mobile && touch) {
+                dispatch_source_cancel(timer);
+                EndfieldRuntimeLog(@"[ZEF] gamepad map: isMobile + supportsTouch patches installed");
             }
         });
         ef_timer = timer;
@@ -219,16 +176,4 @@ void EndfieldGamepadMapStart(void) {
         return;
     }
     [EFGamepadMap start];
-}
-
-void EndfieldGamepadMapKeyboardActivity(void) {
-    // Called on a real key press. While the game is in gamepad mode the hook holds platform
-    // at 8 (mobile binding), which keeps the keyboard out of the device set, so the game never
-    // runs its own switch back to keyboard/mouse. Release platform to 2 for a short window and
-    // let the game switch; if it does not, the hook/guardian restores 8 afterwards.
-    if (ef_read("inputType", EF_OFF_INPUTTYPE) != EF_INPUTTYPE_GAMEPAD) { return; }
-    if (ef_read("platform", EF_OFF_PLATFORM) != EF_PLATFORM_MOBILE) { return; }
-    ef_write("platform", EF_OFF_PLATFORM, EF_PLATFORM_DESKTOP);
-    ef_suppress_until_ns = ef_now_ns() + 3LL * 1000000000LL;
-    EndfieldRuntimeLog(@"[ZEF] gamepad map: keyboard activity -> platform 8 -> 2");
 }

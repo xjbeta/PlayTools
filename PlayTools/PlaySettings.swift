@@ -155,8 +155,7 @@ let settings = PlaySettings.shared
 
     @objc lazy var lordOfMysteriesLandscapeWebview = extraSettingsData.lordOfMysteriesLandscapeWebview
 
-    /// Endfield: keep DeviceInfo.platform at 8 in gamepad mode so the view key (⧉) opens the
-    /// map (default off).
+    /// Endfield: make the gamepad view key (⧉) open the map (default off).
     @objc lazy var endfieldGamepadMapKey = extraSettingsData.endfieldGamepadMapKey
 
     /// Endfield: extra multiplier on the mouse look delta (1.0 = the corrected value).
@@ -364,8 +363,7 @@ struct ExtraAppSettingsData: Codable {
     var skipAppleSignInStateCheck = false
     var fixPlayChainCreateKey = false
     var lordOfMysteriesLandscapeWebview = false
-    /// Endfield: keep DeviceInfo.platform at 8 in gamepad mode so the view key (⧉) opens the
-    /// map (default off).
+    /// Endfield: make the gamepad view key (⧉) open the map (default off).
     var endfieldGamepadMapKey = false
     /// Endfield: extra multiplier on the mouse look delta (1.0 = the corrected value).
     var endfieldMouseDeltaScale: Double = 1.0

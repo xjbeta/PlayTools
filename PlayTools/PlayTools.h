@@ -28,12 +28,9 @@ void PTRestoreMetalHUDMenuItem(void);
 
 extern void pt_set_time_delta(long delta);
 
-// Endfield: keeps DeviceInfo.platform at 8 while the game is in gamepad mode, so the
-// view/map button opens the map. See PlayTools/Endfield/EndfieldGamepadMap.h.
+// Endfield: makes the gamepad view/map button (⧉) open the map.
+// See PlayTools/Endfield/EndfieldGamepadMap.h.
 void EndfieldGamepadMapStart(void);
-
-/// Endfield: called from the keyboard path on a real key press.
-void EndfieldGamepadMapKeyboardActivity(void);
 
 /// Endfield: installs the GCMouse delta scaling (see PlayTools/Endfield/EndfieldMouseDelta.h).
 void EndfieldMouseDeltaStart(void);

@@ -97,15 +97,16 @@ import GameController
             applyMinecraftKeyboardMouseFix()
         }
 
-        // Endfield only - the module checks the bundle identifier itself, and the fix is opt-in
-        // via the setting. Holds DeviceInfo.platform at 8 while inputType == 2 so the map key works.
-        // Endfield only - the modules check the bundle identifier themselves. The plugin-attached
-        // fixes are gated both by the switch and by the plugin actually being installed, so the
-        // patches never take effect without libUnityDesktopMode.
+        // Endfield only - the module checks the bundle identifier itself.
+        if PlaySettings.shared.endfieldGamepadMapKey {
+            EndfieldGamepadMapStart()
+        }
+
+        // Plugin-attached fixes: gated both by the switch and by the plugin actually being
+        // installed, so the patches never take effect without libUnityDesktopMode.
         let plugin = Bundle.main.bundleURL
             .appendingPathComponent("Frameworks/UserPlugins/libUnityDesktopMode.dylib")
         if PlaySettings.shared.endfieldPluginFixes && FileManager.default.fileExists(atPath: plugin.path) {
-            EndfieldGamepadMapStart()
             EndfieldMouseDeltaStart()
         }
 
