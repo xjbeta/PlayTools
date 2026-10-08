@@ -173,6 +173,9 @@ let settings = PlaySettings.shared
     /// Endfield: gamepad haptics fix (controller matching + 4-motor output).
     @objc lazy var endfieldHaptics = extraSettingsData.endfieldHaptics
 
+    /// Endfield: master-volume boost in percent (100 = off, 150 = x1.5).
+    @objc lazy var endfieldVolumeBoost = extraSettingsData.endfieldVolumeBoost
+
     private lazy var pendingLandscapeUIViewControllerNames = extraSettingsData.forceUIViewLandscapeArgs
 
     @objc func landscapeUIViewControllerNames() -> [String] {
@@ -375,5 +378,7 @@ struct ExtraAppSettingsData: Codable {
     var endfieldFpsFix = false
     /// Endfield: gamepad haptics fix (controller matching + 4-motor output).
     var endfieldHaptics = false
+    /// Endfield: master-volume boost in percent (100 = off, 150 = x1.5).
+    var endfieldVolumeBoost: Double = 100
     var forcedRefreshRate: Int = 0
 }

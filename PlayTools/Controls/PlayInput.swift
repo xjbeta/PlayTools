@@ -122,6 +122,10 @@ import GameController
             EndfieldHapticsStart()
         }
 
+        // Endfield volume boost: scales Wwise's rendered samples. Self-gated on the app bundle
+        // id and the endfieldVolumeBoost setting (>100%).
+        EndfieldVolumeFixStart()
+
         // One summary line once the fixes have had time to install (or fail).
         DispatchQueue.main.asyncAfter(deadline: .now() + 15, qos: .utility) {
             EndfieldRuntimeLogStatus()

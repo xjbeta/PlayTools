@@ -44,5 +44,9 @@ void EndfieldFpsFixStart(void);
 /// Endfield: installs the gamepad haptics fix (see EndfieldHaptics/EndfieldHapticsMain.m).
 void EndfieldHapticsStart(void);
 
+/// Endfield: boosts the master volume above 100% by scaling the samples Wwise renders
+/// (see Endfield/EndfieldVolumeFix.h). Driven by the endfieldVolumeBoost setting.
+void EndfieldVolumeFixStart(void);
+
 /// Endfield: log a one-line summary of which runtime fixes installed.
 void EndfieldRuntimeLogStatus(void);

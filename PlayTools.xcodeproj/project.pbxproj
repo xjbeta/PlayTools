@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		01437B0B3077C9360039DF28 /* EndfieldVolumeFix.h in Headers */ = {isa = PBXBuildFile; fileRef = 01437B0A3077C9360039DF28 /* EndfieldVolumeFix.h */; };
+		01437B0D3077C9400039DF28 /* EndfieldVolumeFix.m in Sources */ = {isa = PBXBuildFile; fileRef = 01437B0C3077C9400039DF28 /* EndfieldVolumeFix.m */; };
 		01FDCDA83072BE1E00F76B2D /* EndfieldGamepadMap.h in Headers */ = {isa = PBXBuildFile; fileRef = 01FDCDA73072BE1E00F76B2D /* EndfieldGamepadMap.h */; };
 		01FDCDAA3072BE1F00F76B2D /* EndfieldGamepadMap.m in Sources */ = {isa = PBXBuildFile; fileRef = 01FDCDA93072BE1F00F76B2D /* EndfieldGamepadMap.m */; };
 		01FDCDAE3072D33B00F76B2D /* EndfieldMouseDelta.h in Headers */ = {isa = PBXBuildFile; fileRef = 01FDCDAD3072D33B00F76B2D /* EndfieldMouseDelta.h */; };
@@ -133,6 +135,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		01437B0A3077C9360039DF28 /* EndfieldVolumeFix.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = EndfieldVolumeFix.h; sourceTree = "<group>"; };
+		01437B0C3077C9400039DF28 /* EndfieldVolumeFix.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = EndfieldVolumeFix.m; sourceTree = "<group>"; };
 		01FDCDA73072BE1E00F76B2D /* EndfieldGamepadMap.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = EndfieldGamepadMap.h; sourceTree = "<group>"; };
 		01FDCDA93072BE1F00F76B2D /* EndfieldGamepadMap.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = EndfieldGamepadMap.m; sourceTree = "<group>"; };
 		01FDCDAD3072D33B00F76B2D /* EndfieldMouseDelta.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = EndfieldMouseDelta.h; sourceTree = "<group>"; };
@@ -283,6 +287,8 @@
 				01FDCDB73073B6D700F76B2D /* EndfieldFpsFix.m */,
 				01FDCDB93073B6E100F76B2D /* EndfieldResolutionFix.h */,
 				01FDCDBB3073B6E100F76B2D /* EndfieldResolutionFix.m */,
+				01437B0A3077C9360039DF28 /* EndfieldVolumeFix.h */,
+				01437B0C3077C9400039DF28 /* EndfieldVolumeFix.m */,
 			);
 			path = Endfield;
 			sourceTree = "<group>";
@@ -674,6 +680,7 @@
 				AA71986E287A81A000623C15 /* NSObject+Swizzle.h in Headers */,
 				AB7DA47729B8A78B0034ACB2 /* PlayShadow.h in Headers */,
 				01FDCDBF3073CD3B00F76B2D /* EndfieldHapticsFix.h in Headers */,
+				01437B0B3077C9360039DF28 /* EndfieldVolumeFix.h in Headers */,
 				AA719846287A81A000623C15 /* IOHIDEvent+KIF.h in Headers */,
 				01FDCDC33073CD3B00F76B2D /* EndfieldHapticsLog.h in Headers */,
 				01FDCDCD3073CD3B00F76B2D /* EndfieldHapticsMap.h in Headers */,
@@ -829,6 +836,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				01437B0D3077C9400039DF28 /* EndfieldVolumeFix.m in Sources */,
 				92611FDA2F5FDDEC00B7B1E8 /* GamepadToKeyEditorMouseEventAdapter.swift in Sources */,
 				954389CA2B392D7800B063BB /* DraggableButton.swift in Sources */,
 				9562D16D2AB505D4002C329D /* ControllerEventAdapter.swift in Sources */,
